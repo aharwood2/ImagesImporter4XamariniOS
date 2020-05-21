@@ -14,13 +14,13 @@ namespace ImagesImporter4XamariniOS
             {
                 Console.WriteLine("Hello World! Welcome to ImagesImporter4iOS. Please input the image folder path:");
                 var path = Console.ReadLine();
-                var currentDirectory = GetDirectory(path);
-                var images = GetImages(currentDirectory);
+                var sourceDirectory = GetDirectory(path);
+                var images = GetImages(sourceDirectory);
 
                 Console.WriteLine("Please input the Asset Catalog Name:");
                 var assetCatalogName = Console.ReadLine();
 
-                GenerateResources(assetCatalogName, currentDirectory, images);
+                GenerateResources(assetCatalogName, sourceDirectory, images);
                 Console.WriteLine($"Completed! Please copy the {assetCatalogName}.xcassets folder into your root folder of your iOS project, and copy the content of the csproject.txt into your *.csproj file.");
                 Console.WriteLine("Press Enter to exit.");
                 var enter = Console.ReadKey();
@@ -37,27 +37,64 @@ namespace ImagesImporter4XamariniOS
             
         }
 
-        private static void GenerateResources(string assetCatalogName, DirectoryInfo currentDirectory, List<FileInfo> images)
+        private static void GenerateResources(string assetCatalogName, DirectoryInfo sourceDirectory, List<FileInfo> images)
         {
-            var targetDirectory = currentDirectory.CreateSubdirectory($"{assetCatalogName}.xcassets");
+            var targetDirectory = sourceDirectory.CreateSubdirectory($"{assetCatalogName}.xcassets");
             StringBuilder sb = new StringBuilder();
-            foreach (var fileInfo in images.AsParallel())
+            foreach (var fileInfo in images)
             {
-                var imageFolder =
-                    targetDirectory.CreateSubdirectory($"{fileInfo.Name.Replace(fileInfo.Extension, "")}.imageset");
-                fileInfo.CopyTo(Path.Combine(imageFolder.FullName, fileInfo.Name));
-                string content = File.ReadAllText("Contents.json");
+                // Handle string of image
+                var fileName = fileInfo.Name;
+                var fileNameClip = fileName.Substring(0, fileName.IndexOf('@'));
+                var fileSizeExt = fileName.Substring(fileName.IndexOf('@') + 1, 1);
+                var dirName = $"{fileNameClip}.imageset";
+
+                // Check if the directory already exists
+                var imageFolderPath = Path.Combine(targetDirectory.FullName, dirName);
+                DirectoryInfo imageFolder;
+                var insertImage = false;
+                if (Directory.Exists(imageFolderPath))
+                {
+                    imageFolder = GetDirectory(imageFolderPath);
+                    insertImage = true;
+                }
+                else
+                {
+                    imageFolder = targetDirectory.CreateSubdirectory(dirName);
+                }
+                
+                // Copy in image file
+                fileInfo.CopyTo(Path.Combine(imageFolder.FullName, fileName));
+
+                // Are we creating a new JSON or modifying an existing one
+                string content;
+                if (insertImage)
+                {
+                    // Read existing from directory
+                    content = File.ReadAllText(Path.Combine(imageFolder.FullName, "Contents.json"));
+                    
+                }
+                else
+                {
+                    // Read template from working directory
+                    content = File.ReadAllText("Contents.json");
+                }
+
+                // Modify contents and write
                 File.WriteAllText(Path.Combine(imageFolder.FullName, "Contents.json"),
-                    content.Replace("{filename}", fileInfo.Name));
+                        content.Replace($"[[filename{fileSizeExt}]]", fileName));
+
+
+                // Create csproj contents
                 sb.Append(
-                    $@"<ImageAsset Include=""{assetCatalogName}.xcassets\{fileInfo.Name.Replace(fileInfo.Extension, "")}.imageset\Contents.json"">");
+                    $@"<ImageAsset Include=""{assetCatalogName}.xcassets\{fileName.Replace(fileInfo.Extension, "")}.imageset\Contents.json"">");
                 sb.Append(Environment.NewLine);
                 sb.Append(@"<Visible>false</Visible>");
                 sb.Append(Environment.NewLine);
                 sb.Append(@"</ImageAsset>");
                 sb.Append(Environment.NewLine);
                 sb.Append(
-                    $@"<ImageAsset Include=""{assetCatalogName}.xcassets\{fileInfo.Name.Replace(fileInfo.Extension, "")}.imageset\{fileInfo.Name}"">");
+                    $@"<ImageAsset Include=""{assetCatalogName}.xcassets\{fileName.Replace(fileInfo.Extension, "")}.imageset\{fileName}"">");
                 sb.Append(Environment.NewLine);
                 sb.Append(@"<Visible>false</Visible>");
                 sb.Append(Environment.NewLine);
@@ -70,21 +107,9 @@ namespace ImagesImporter4XamariniOS
 
         private static DirectoryInfo GetDirectory(string path)
         {
-
-            bool isPathValid = false;
-            do
-            {
-                if (!Directory.Exists(path))
-                {
-                    Console.WriteLine("No such folder. Please input a valid folder path:");
-                }
-                else
-                {
-                    isPathValid = true;
-                }
-            }
-            while (isPathValid == false);
-            return new DirectoryInfo(path);
+            path = Path.GetFullPath(path);
+            if (Directory.Exists(path)) return new DirectoryInfo(path);
+            throw new Exception($"Path: {path} is invalid");
         }
 
         private static List<FileInfo> GetImages(DirectoryInfo directory)

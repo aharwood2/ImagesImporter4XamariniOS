@@ -1,18 +1,21 @@
 {
   "images": [
     {
+      "scale": "1x",
+      "idiom": "universal",
+      "filename": "[[filename1]]"
+    },
+    {
       "scale": "2x",
       "idiom": "universal"
+	  "filename": "[[filename2]]"
     },
     {
       "scale": "3x",
       "idiom": "universal"
-    },
-    {
-      "scale": "1x",
-      "idiom": "universal",
-      "filename": "{filename}"
+	  "filename": "[[filename3]]"
     }
+    
   ],
   "properties": {},
   "info": {
