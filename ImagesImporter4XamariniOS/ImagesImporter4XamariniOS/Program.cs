@@ -86,13 +86,17 @@ namespace ImagesImporter4XamariniOS
 
 
                 // Create csproj contents
-                sb.Append(
-                    $@"<ImageAsset Include=""{assetCatalogName}.xcassets\{fileName.Replace(fileInfo.Extension, "")}.imageset\Contents.json"">");
-                sb.Append(Environment.NewLine);
-                sb.Append(@"<Visible>false</Visible>");
-                sb.Append(Environment.NewLine);
-                sb.Append(@"</ImageAsset>");
-                sb.Append(Environment.NewLine);
+                if (!insertImage)
+                {
+                    sb.Append(
+                    $@"<ImageAsset Include=""{assetCatalogName}.xcassets\{fileNameClip}.imageset\Contents.json"">");
+                    sb.Append(Environment.NewLine);
+                    sb.Append(@"<Visible>false</Visible>");
+                    sb.Append(Environment.NewLine);
+                    sb.Append(@"</ImageAsset>");
+                    sb.Append(Environment.NewLine);
+                }
+                
                 sb.Append(
                     $@"<ImageAsset Include=""{assetCatalogName}.xcassets\{fileName.Replace(fileInfo.Extension, "")}.imageset\{fileName}"">");
                 sb.Append(Environment.NewLine);
