@@ -98,7 +98,7 @@ namespace ImagesImporter4XamariniOS
                 }
                 
                 sb.Append(
-                    $@"<ImageAsset Include=""{assetCatalogName}.xcassets\{fileName.Replace(fileInfo.Extension, "")}.imageset\{fileName}"">");
+                    $@"<ImageAsset Include=""{assetCatalogName}.xcassets\{fileNameClip}.imageset\{fileName}"">");
                 sb.Append(Environment.NewLine);
                 sb.Append(@"<Visible>false</Visible>");
                 sb.Append(Environment.NewLine);
